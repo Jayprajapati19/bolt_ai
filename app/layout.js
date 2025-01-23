@@ -1,5 +1,7 @@
+import { ConvexClient } from "convex/browser";
 import "./globals.css";
 import Provider from "./provider";
+import { ConvexProvider } from "convex/react";
 
 export const metadata = {
   title: "Jay Prajapati, Bolt",
@@ -10,7 +12,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <Provider>{children}</Provider>
+        <ConvexProvider>
+          <Provider>{children}</Provider>
+        </ConvexProvider>
       </body>
     </html>
   );
