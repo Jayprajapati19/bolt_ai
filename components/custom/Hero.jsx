@@ -1,15 +1,24 @@
 "use client"
 import { MessagesContext } from '@/context/MessagesContext';
+import { UserDetailContext } from '@/context/UserDetailContext';
 import Colors from '@/data/Colors';
 import Lookup from '@/data/Lookup'
 import { ArrowRight, Link } from 'lucide-react'
 import React, { useContext, useState } from 'react'
+import SignInDialog from './SignInDialog';
 
 function Hero() {
     const [userInput, setUserInput] = useState();
     const { messages, setMessages } = useContext(MessagesContext)
+    const { userDetail, setUserDetail } = useContext(UserDetailContext)
+    const [openDialog, setOpenDialog] = useState(false);
 
     const onGenerate = (input) => {
+        if (!userDetail?.name) {
+            setOpenDialog(true);
+            return;
+        }
+
         setMessages({
             role: 'user',
             content: input
@@ -51,6 +60,8 @@ function Hero() {
                     >{suggestion}</h2>
                 ))}
             </div>
+            <SignInDialog openDialog={openDialog}
+                closeDialog={(v) => setOpenDialog(v)} />
         </div>
     )
 }
