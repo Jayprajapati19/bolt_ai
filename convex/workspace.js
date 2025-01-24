@@ -1,12 +1,17 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
+// Create Workspace
 export const CreateWorkSpace = mutation({
   args: {
     messages: v.any(),
-    userId: v.string(), // Changed from v.id("users") to v.string()
+    userId: v.id("users"), // Ensures `userId` references the `users` collection
   },
   handler: async (ctx, args) => {
+    if (!args.userId || !args.messages) {
+      throw new Error("Missing required fields: userId or messages");
+    }
+
     // Get or create user
     const user = await ctx.db
       .query("users")
@@ -27,6 +32,7 @@ export const CreateWorkSpace = mutation({
   },
 });
 
+// Get Workspace
 export const GetWorkSpace = query({
   args: {
     workspaceId: v.id("workspace"),
@@ -37,26 +43,45 @@ export const GetWorkSpace = query({
   },
 });
 
-export const GetAllWorkspace = query({
+// Update Messages in Workspace
+export const UpdateMessages = mutation({
   args: {
-    userId: v.string(),
+    workspaceId: v.id("workspace"),
+    messages: v.any(),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("userId"), args.userId))
-      .first();
+    const result = await ctx.db.patch(args.workspaceId, {
+      messages: args.messages,
+    });
+    return result;
+  },
+});
 
-    if (!user) {
-      return [];
-    }
+// Update Files in Workspace
+export const UpdateFiles = mutation({
+  args: {
+    workspaceId: v.id("workspace"),
+    files: v.any(),
+  },
+  handler: async (ctx, args) => {
+    const result = await ctx.db.patch(args.workspaceId, {
+      fileData: args.files,
+    });
+    return result;
+  },
+});
 
-    const workspaces = await ctx.db
+// Get All Workspaces for a User
+export const GetAllWorkspaces = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const result = await ctx.db
       .query("workspace")
-      .filter((q) => q.eq(q.field("user"), user._id))
-      .order("desc")
+      .filter((q) => q.eq(q.field("user"), args.userId))
       .collect();
 
-    return workspaces;
+    return result;
   },
 });

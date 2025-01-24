@@ -99,7 +99,6 @@ function CodeView() {
                         <SandpackFileExplorer style={{ height: '80vh' }} />
                         <SandpackCodeEditor style={{ height: '80vh' }} />
                     </> :
-
                         <>
                             <SandpackPreview style={{ height: '80vh' }} showNavigator={true} />
                         </>}
@@ -109,10 +108,11 @@ function CodeView() {
 
             {loading && <div className='p-10 bg-gray-900 opacity-85  absolute top-0 rounded-lg w-full h-full flex items-center  justify-center'>
                 <LoaderPinwheel className='animate-spin h-10 w-10 text-white' />
-                <h2 className='text-white'>Generating Your files....</h2>
+                <h2 className='text-white '>Generating your files....</h2>
             </div>}
+
         </div>
     )
 }
 
-export default CodeView
+export default CodeView;

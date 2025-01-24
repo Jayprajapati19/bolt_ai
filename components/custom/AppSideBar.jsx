@@ -1,4 +1,7 @@
-import React from 'react'
+"use client"
+import React, { useContext } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { UserDetailContext } from '@/context/UserDetailContext'
 import {
     Sidebar,
     SidebarContent,
@@ -6,21 +9,25 @@ import {
     SidebarGroup,
     SidebarHeader,
 } from "@/components/ui/sidebar"
-import Image from 'next/image'
 import { Button } from '../ui/button'
 import { MessageCircleCode } from 'lucide-react'
 import WorkSpaceHistory from './WorkSpaceHistory'
 
 function AppSideBar() {
-    return (
-        <Sidebar>
-            <SidebarHeader className='p-7' >
-                {/* <Image src={'/logo.png'} alt='logo' width={30} height={30} /> */}
-            </SidebarHeader>
+    const pathname = usePathname();
+    const router = useRouter();
+    const isWorkspacePage = pathname?.includes('/workspace');
 
+    if (!isWorkspacePage) return null;
+
+    return (
+        <Sidebar className="w-80 border-r">
+            <SidebarHeader className='p-7'>
+                {/* ...existing header content... */}
+            </SidebarHeader>
             <SidebarContent className='p-7'>
-                <Button>
-                    <MessageCircleCode />  Start New Chat
+                <Button onClick={() => router.push('/')}>
+                    <MessageCircleCode className="mr-2" />  Start New Chat
                 </Button>
                 <SidebarGroup />
                 <WorkSpaceHistory />

@@ -14,7 +14,11 @@ export default function RootLayout({ children }) {
             </head>
             <body className="min-h-screen bg-background font-sans antialiased">
                 <ConvexProvider client={convex}>
-                    <Provider>{children}</Provider>
+                    <Provider>
+                        <div className="flex justify-center w-full">
+                            {children}
+                        </div>
+                    </Provider>
                 </ConvexProvider>
             </body>
         </html>
