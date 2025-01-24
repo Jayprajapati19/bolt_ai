@@ -37,28 +37,26 @@ export const GetWorkSpace = query({
   },
 });
 
-export const UpdateMessages = mutation({
+export const GetAllWorkspace = query({
   args: {
-    workspaceId: v.id("workspace"),
-    messages: v.any(),
+    userId: v.string(),
   },
   handler: async (ctx, args) => {
-    const result = await ctx.db.patch(args.workspaceId, {
-      messages: args.messages,
-    });
-    return result;
-  },
-});
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .first();
 
-export const UpdateFiles = mutation({
-  args: {
-    workspaceId: v.id("workspace"),
-    files: v.any(),
-  },
-  handler: async (ctx, args) => {
-    const result = await ctx.db.patch(args.workspaceId, {
-      fileData: args.files,
-    });
-    return result;
+    if (!user) {
+      return [];
+    }
+
+    const workspaces = await ctx.db
+      .query("workspace")
+      .filter((q) => q.eq(q.field("user"), user._id))
+      .order("desc")
+      .collect();
+
+    return workspaces;
   },
 });
