@@ -34,7 +34,7 @@ function Hero() {
         try {
             setMessages(msg);
             const workspaceId = await CreateWorkSpace({
-                userId: userDetail.userId,
+                userId: userDetail?.userId,
                 messages: [msg],
             });
 

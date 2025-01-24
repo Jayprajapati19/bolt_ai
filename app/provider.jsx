@@ -49,8 +49,10 @@ function Provider({ children }) {
                         >
                             <Header />
                             <SidebarProvider>
+                                <AppSideBar />
                                 {children}
                             </SidebarProvider>
+
                         </NextThemesProvider>
                     </MessagesContext.Provider>
                 </UserDetailContext.Provider>

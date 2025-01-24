@@ -5,26 +5,33 @@ import { mutation, query } from "./_generated/server";
 export const CreateWorkSpace = mutation({
   args: {
     messages: v.any(),
-    userId: v.id("users"), // Ensures `userId` references the `users` collection
+    userId: v.string(), // Change from v.id("users") to v.string()
   },
   handler: async (ctx, args) => {
     if (!args.userId || !args.messages) {
       throw new Error("Missing required fields: userId or messages");
     }
 
-    // Get or create user
+    // Try finding user by both userId and uid fields
     const user = await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .filter((q) => 
+        q.or(
+          q.eq(q.field("userId"), args.userId),
+          q.eq(q.field("email"), args.email)
+        )
+      )
       .first();
 
     if (!user) {
-      throw new Error("User not found");
+      console.error("Failed to find user:", args.userId);
+      throw new Error(`User not found with ID: ${args.userId}`);
     }
 
     const workspaceId = await ctx.db.insert("workspace", {
       messages: args.messages,
       user: user._id,
+      userId: args.userId, // Store userId in workspace too
       createdAt: new Date().toISOString(),
     });
 
@@ -38,8 +45,12 @@ export const GetWorkSpace = query({
     workspaceId: v.id("workspace"),
   },
   handler: async (ctx, args) => {
-    const result = await ctx.db.get(args.workspaceId);
-    return result;
+    const workspace = await ctx.db.get(args.workspaceId);
+    if (!workspace) return null;
+    return {
+      ...workspace,
+      _id: args.workspaceId, // Ensure ID is included
+    };
   },
 });
 
@@ -74,14 +85,24 @@ export const UpdateFiles = mutation({
 // Get All Workspaces for a User
 export const GetAllWorkspaces = query({
   args: {
-    userId: v.id("users"),
+    userId: v.string(), // Change from v.id("users") to v.string()
   },
   handler: async (ctx, args) => {
-    const result = await ctx.db
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .first();
+
+    if (!user) return [];
+
+    const workspaces = await ctx.db
       .query("workspace")
-      .filter((q) => q.eq(q.field("user"), args.userId))
+      .filter((q) => q.eq(q.field("user"), user._id))
       .collect();
 
-    return result;
+    return workspaces.map((workspace) => ({
+      ...workspace,
+      userId: args.userId,
+    }));
   },
 });

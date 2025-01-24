@@ -22,27 +22,7 @@ function SignInDialog({ openDialog, closeDialog, redirectPath }) {
     const router = useRouter();
     const { userDetail, setUserDetail } = useContext(UserDetailContext);
     const CreateUser = useMutation(api.users.CreateUser);
-    const CreateWorkSpace = useMutation(api.workspace.CreateWorkSpace);
-
-    const handleRedirect = async (userToStore) => {
-        if (redirectPath) {
-            router.push(redirectPath);
-        } else {
-            // Create a default workspace if none exists
-            try {
-                const workspaceId = await CreateWorkSpace({
-                    userId: userToStore.userId,
-                    messages: [{
-                        role: "system",
-                        content: "New Conversation"
-                    }]
-                });
-                router.push(`/workspace/${workspaceId}`);
-            } catch (error) {
-                console.error("Error creating workspace:", error);
-            }
-        }
-    };
+    const CreateWorkSpace = useMutation(api.workspace.CreateWorkSpace); // Fix: workspaces -> workspace
 
     const googleLogin = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
@@ -55,27 +35,47 @@ function SignInDialog({ openDialog, closeDialog, redirectPath }) {
                 const user = userInfo.data;
                 const generatedId = uuid4();
 
-                await CreateUser({
-                    name: user?.name,
-                    email: user?.email,
-                    picture: user?.picture,
+                console.log("Creating user with ID:", generatedId);
+                const createdUser = await CreateUser({
+                    name: user.name,
+                    email: user.email,
+                    picture: user.picture,
                     userId: generatedId,
                 });
 
-                const userToStore = {
-                    ...user,
-                    userId: generatedId,
-                };
-
-                if (typeof window !== "undefined") {
-                    localStorage.setItem("user", JSON.stringify(userToStore));
+                if (!createdUser) {
+                    throw new Error("Failed to create user");
                 }
 
+                // Store complete user data
+                const userToStore = {
+                    ...user,
+                    ...createdUser,
+                    userId: generatedId
+                };
+
+                localStorage.setItem("user", JSON.stringify(userToStore));
                 setUserDetail(userToStore);
+
+                // Wait for user creation to complete
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
                 closeDialog(false);
-                await handleRedirect(userToStore);
+
+                // Create workspace with verified user
+                const workspaceId = await CreateWorkSpace({
+                    userId: generatedId,
+                    messages: [{
+                        role: "system",
+                        content: "New Workspace"
+                    }]
+                });
+
+                if (workspaceId) {
+                    router.push(`/workspace/${workspaceId}`);
+                }
             } catch (error) {
-                console.error("Error in login:", error);
+                console.error("Error in login flow:", error);
             }
         },
         onError: (errorResponse) => console.log(errorResponse),

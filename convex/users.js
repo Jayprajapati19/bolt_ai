@@ -22,7 +22,7 @@ export const CreateUser = mutation({
     email: v.string(),
     name: v.string(),
     picture: v.string(),
-    userId: v.string(), // Consistently use userId in the code
+    userId: v.string(),
   },
   handler: async (ctx, args) => {
     const existingUser = await ctx.db
@@ -31,15 +31,23 @@ export const CreateUser = mutation({
       .first();
 
     if (existingUser) {
-      return existingUser;
+      return {
+        ...existingUser,
+        userId: existingUser.userId || existingUser.uid,
+      };
     }
 
-    // Map userId to uid before inserting into the database
-    return await ctx.db.insert("users", {
+    const newUser = await ctx.db.insert("users", {
       email: args.email,
       name: args.name,
       picture: args.picture,
-      uid: args.userId, // Use uid as required by the schema
+      userId: args.userId, // Store userId directly
+      createdAt: new Date().toISOString(),
     });
+
+    return {
+      ...newUser,
+      userId: args.userId,
+    };
   },
 });
