@@ -11,6 +11,8 @@ import { ArrowRight, Link, Loader, Loader2Icon } from 'lucide-react'
 import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import React, { useContext, useEffect, useState } from 'react'
+import ReactMarkDown from "react-markdown"
+
 
 function ChatView() {
     const { id } = useParams()
@@ -90,7 +92,7 @@ function ChatView() {
                             height={35}
                             className='rounded-full  '
                         />}
-                        <h2>{msg.content}</h2>
+                        <ReactMarkDown className='flex flex-col'>{msg.content}</ReactMarkDown>
 
                     </div>
                 ))}
