@@ -8,6 +8,7 @@ import Prompt from '@/data/Prompt';
 import { useConvex, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useParams } from 'next/navigation';
+import { LoaderPinwheel } from 'lucide-react';
 
 
 function CodeView() {
@@ -17,17 +18,21 @@ function CodeView() {
     const { messages, setMessages } = useContext(MessagesContext)
     const UpdateFiles = useMutation(api.workspace.UpdateFiles)
     const convex = useConvex()
+    const [loading, setLoading] = useState(false);
+
 
     useEffect(() => {
         id && GetFiles();
     }, [id])
 
     const GetFiles = async () => {
+        setLoading(true);
         const result = await convex.query(api.workspace.GetWorkSpace, {
             workspaceId: id
         });
-        const mergedFiles = { ...Lookup.DEFAULT_FILE, ...result }
+        const mergedFiles = { ...Lookup.DEFAULT_FILE, ...result?.fileData }
         setFiles(mergedFiles)
+        setLoading(false)
     }
 
     useEffect(() => {
@@ -42,10 +47,12 @@ function CodeView() {
 
 
     const GenerateAiCode = async () => {
+        setLoading(true);
         const PROMPT = JSON.stringify(messages) + " " + Prompt.CODE_GEN_PROMPT;
         const result = await axios.post('/api/gen-ai-code', {
             prompt: PROMPT
         })
+
         console.log(result.data);
         const aiResp = result.data;
 
@@ -55,13 +62,12 @@ function CodeView() {
             workspaceId: id,
             files: aiResp?.files
         })
-
-
+        setLoading(false);
     }
 
 
     return (
-        <div>
+        <div className='relative'>
             <div className='bg-[#181818] w-full p-2 border'>
                 <div className='flex items-center flex-wrap shrink-0 bg-black p-1  justify-center rounded-full w-[140px] gap-3'>
                     <h2
@@ -100,6 +106,11 @@ function CodeView() {
 
                 </SandpackLayout>
             </SandpackProvider>
+
+            {loading && <div className='p-10 bg-gray-900 opacity-85  absolute top-0 rounded-lg w-full h-full flex items-center  justify-center'>
+                <LoaderPinwheel className='animate-spin h-10 w-10 text-white' />
+                <h2 className='text-white'>Generating Your files....</h2>
+            </div>}
         </div>
     )
 }
