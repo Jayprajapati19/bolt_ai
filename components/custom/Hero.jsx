@@ -8,7 +8,7 @@ import Colors from '@/data/Colors'
 import { MessagesContext } from '@/context/MessagesContext'
 import { UserDetailContext } from '@/context/UserDetailContext'
 import SignInDialog from './SignInDialog'
-import { useMutation } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import { useRouter } from 'next/navigation'
 
@@ -19,11 +19,12 @@ function Hero() {
     const [openDialog, setOpenDialog] = useState(false);
     const CreateWorkSpace = useMutation(api.workspace.CreateWorkSpace)
     const router = useRouter()
-
-
+    const user = useQuery("users:GetUser", {
+        email: userDetail?.email
+    });
 
     const onGenerate = async (input) => {
-        if (!userDetail?.name) {
+        if (!userDetail?.email) {
             setOpenDialog(true);
             return;
         }
@@ -31,19 +32,22 @@ function Hero() {
         const msg = {
             role: 'user',
             content: input
+        };
+
+        try {
+            setMessages(msg);
+            const workspaceId = await CreateWorkSpace({
+                userId: userDetail.userId, // Use Google user ID
+                messages: [msg]
+            });
+
+            console.log(workspaceId);
+            router.push('/workspace/' + workspaceId);
+        } catch (error) {
+            console.error("Error creating workspace:", error);
+            setOpenDialog(true);
         }
-
-        setMessages(msg);
-        const workspaceId = await CreateWorkSpace({
-            user: userDetail._id,
-            messages: [msg]
-        })
-        console.log(workspaceId);
-        router.push('/workspace/' + workspaceId)
-
-
-
-    }
+    };
 
     return (
         <div className='flex flex-col items-center mt-36 xl:mt-52 gap-2'>

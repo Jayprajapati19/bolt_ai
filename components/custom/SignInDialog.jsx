@@ -25,34 +25,29 @@ function SignInDialog({ openDialog, closeDialog }) {
 
     const googleLogin = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
-            console.log(tokenResponse);
+            try {
+                const userInfo = await axios.get(
+                    'https://www.googleapis.com/oauth2/v3/userinfo',
+                    { headers: { Authorization: 'Bearer ' + tokenResponse?.access_token } },
+                );
 
-            const userInfo = await axios.get(
-                'https://www.googleapis.com/oauth2/v3/userinfo',
-                { headers: { Authorization: 'Bearer ' + tokenResponse?.access_token } },
-            );
+                const user = userInfo.data;
+                await CreateUser({
+                    name: user?.name,
+                    email: user?.email,
+                    picture: user?.picture,
+                    userId: uuid4() // Changed from uid to userId to match schema
+                });
 
-            console.log(userInfo);
-            // save this inside database
-            const user = userInfo.data;
-            await CreateUser({
-                name: user?.name,
-                email: user?.email,
-                picture: user?.picture,
-                uid: uuid4()
-            });
+                if (typeof window !== undefined) {
+                    localStorage.setItem("user", JSON.stringify(user));
+                }
 
-            if (typeof window !== undefined) {
-                localStorage.setItem("user", JSON.stringify(user));
-
-
+                setUserDetail(userInfo?.data);
+                closeDialog(false);
+            } catch (error) {
+                console.error("Error creating user:", error);
             }
-
-
-            setUserDetail(userInfo?.data)
-
-            closeDialog(false);
-
         },
         onError: errorResponse => console.log(errorResponse),
     });
