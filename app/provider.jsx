@@ -11,6 +11,8 @@ function Provider({ children }) {
     const [messages, setMessages] = useState()
     const [userDetail, setUserDetail] = useState()
 
+    const IsAuthenticated = () => { }
+
     return (
         <div>
             <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID_KEY}>
