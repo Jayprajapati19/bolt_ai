@@ -22,7 +22,6 @@ function SignInDialog({ openDialog, closeDialog, redirectPath }) {
     const router = useRouter();
     const { userDetail, setUserDetail } = useContext(UserDetailContext);
     const CreateUser = useMutation(api.users.CreateUser);
-    const CreateWorkSpace = useMutation(api.workspace.CreateWorkSpace); // Fix: workspaces -> workspace
 
     const googleLogin = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
@@ -35,47 +34,31 @@ function SignInDialog({ openDialog, closeDialog, redirectPath }) {
                 const user = userInfo.data;
                 const generatedId = uuid4();
 
-                console.log("Creating user with ID:", generatedId);
-                const createdUser = await CreateUser({
+                await CreateUser({
                     name: user.name,
                     email: user.email,
                     picture: user.picture,
                     userId: generatedId,
                 });
 
-                if (!createdUser) {
-                    throw new Error("Failed to create user");
-                }
-
-                // Store complete user data
                 const userToStore = {
                     ...user,
-                    ...createdUser,
-                    userId: generatedId
+                    userId: generatedId,
                 };
 
-                localStorage.setItem("user", JSON.stringify(userToStore));
+                if (typeof window !== "undefined") {
+                    localStorage.setItem("user", JSON.stringify(userToStore));
+                }
+
                 setUserDetail(userToStore);
-
-                // Wait for user creation to complete
-                await new Promise(resolve => setTimeout(resolve, 1500));
-
                 closeDialog(false);
 
-                // Create workspace with verified user
-                const workspaceId = await CreateWorkSpace({
-                    userId: generatedId,
-                    messages: [{
-                        role: "system",
-                        content: "New Workspace"
-                    }]
-                });
-
-                if (workspaceId) {
-                    router.push(`/workspace/${workspaceId}`);
+                // Redirect to workspace if there's a pending path
+                if (redirectPath) {
+                    router.push(redirectPath);
                 }
             } catch (error) {
-                console.error("Error in login flow:", error);
+                console.error("Error creating user:", error);
             }
         },
         onError: (errorResponse) => console.log(errorResponse),
